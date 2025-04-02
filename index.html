@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作系统模拟程序</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>操作系统模拟程序</h1>
+        </header>
+        
+        <main>
+            <div class="terminal">
+                <div class="output" id="output"></div>
+                <div class="input-line">
+                    <span class="prompt">$</span>
+                    <input type="text" id="command-input" autofocus>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="panel-section">
+                    <h2>进程状态</h2>
+                    <div id="process-status"></div>
+                </div>
+                <div class="panel-section">
+                    <h2>内存使用情况</h2>
+                    <div id="memory-status"></div>
+                </div>
+                <div class="panel-section">
+                    <h2>文件系统</h2>
+                    <div id="file-status"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

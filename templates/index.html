@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作系统模拟程序</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+            color: #e6f1ff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding: 30px;
+            background: rgba(100, 255, 218, 0.05);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        header h1 {
+            color: #64ffda;
+            font-size: 2.8em;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px rgba(100, 255, 218, 0.3);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
+            }
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .terminal {
+            background-color: rgba(17, 34, 64, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .output {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(10, 25, 47, 0.8);
+            color: #64ffda;
+            font-family: 'Courier New', monospace;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            background-color: rgba(10, 25, 47, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .prompt {
+            color: #64ffda;
+            margin-right: 15px;
+            text-shadow: 0 0 5px rgba(100, 255, 218, 0.3);
+            font-weight: bold;
+        }
+
+        #command-input {
+            flex-grow: 1;
+            background-color: transparent;
+            border: none;
+            color: #64ffda;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            outline: none;
+        }
+
+        #command-input::placeholder {
+            color: #64ffda;
+            opacity: 0.5;
+        }
+
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .panel-section {
+            background-color: rgba(17, 34, 64, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .panel-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            color: #64ffda;
+            font-size: 1.3em;
+            text-shadow: 0 0 5px rgba(100, 255, 218, 0.3);
+        }
+
+        .panel-content {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            padding-right: 10px;
+        }
+
+        /* 自定义滚动条样式 */
+        .panel-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: rgba(10, 25, 47, 0.8);
+            border-radius: 4px;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: rgba(100, 255, 218, 0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 255, 218, 0.5);
+        }
+
+        /* Firefox滚动条样式 */
+        .panel-content {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 255, 218, 0.3) rgba(10, 25, 47, 0.8);
+        }
+
+        .panel-section.collapsed .panel-content {
+            max-height: 0;
+            margin-top: 0;
+            overflow: hidden;
+        }
+
+        .toggle-icon {
+            color: #64ffda;
+            font-size: 1.5em;
+            transition: transform 0.3s ease;
+        }
+
+        .panel-section.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .panel-section.collapsed {
+            padding-bottom: 15px;
+        }
+
+        .process-item, .file-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: rgba(10, 25, 47, 0.8);
+            border-radius: 10px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .process-item::before, .file-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: rgba(100, 255, 218, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .process-item:hover::before, .file-item:hover::before {
+            background: rgba(100, 255, 218, 0.5);
+            width: 6px;
+        }
+
+        .process-item:hover, .file-item:hover {
+            background-color: rgba(10, 25, 47, 0.9);
+            border-color: rgba(100, 255, 218, 0.3);
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.1);
+        }
+
+        .process-item p, .file-item p {
+            margin: 8px 0;
+            color: #e6f1ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .process-item p span, .file-item p span {
+            color: #64ffda;
+            font-weight: bold;
+        }
+
+        .command {
+            color: #64ffda;
+            text-shadow: 0 0 5px rgba(100, 255, 218, 0.3);
+            font-weight: bold;
+        }
+
+        .result {
+            color: #e6f1ff;
+            margin: 8px 0;
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin: 8px 0;
+            text-shadow: 0 0 5px rgba(255, 107, 107, 0.3);
+        }
+
+        .help-panel {
+            grid-column: 1 / -1;
+            background-color: rgba(17, 34, 64, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.15);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+        }
+
+        .help-panel h3 {
+            color: #64ffda;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px rgba(100, 255, 218, 0.3);
+            font-size: 1.4em;
+            text-align: center;
+        }
+
+        .help-panel ul {
+            list-style-type: none;
+            margin-left: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .help-panel li {
+            margin: 0;
+            color: #e6f1ff;
+            font-size: 1em;
+            line-height: 1.6;
+            padding: 15px;
+            background-color: rgba(10, 25, 47, 0.8);
+            border-radius: 10px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .help-panel li:hover {
+            background-color: rgba(10, 25, 47, 0.9);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.1);
+        }
+
+        .help-panel .example {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(100, 255, 218, 0.2);
+        }
+
+        .help-panel .example h3 {
+            margin-bottom: 20px;
+        }
+
+        .help-panel .example li {
+            background-color: rgba(100, 255, 218, 0.1);
+            color: #64ffda;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            
+            .terminal {
+                height: 400px;
+            }
+
+            .help-panel ul {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>操作系统模拟程序</h1>
+        </header>
+        
+        <main>
+            <div class="terminal">
+                <div class="output" id="output"></div>
+                <div class="input-line">
+                    <span class="prompt">$</span>
+                    <input type="text" id="command-input" autofocus placeholder="输入命令...">
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="panel-section">
+                    <div class="panel-header">
+                        <h2>进程状态</h2>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="panel-content" id="process-status"></div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-header">
+                        <h2>内存使用情况</h2>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="panel-content" id="memory-status"></div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-header">
+                        <h2>文件系统</h2>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="panel-content" id="file-status"></div>
+                </div>
+            </div>
+
+            <div class="help-panel">
+                <h3>系统命令参考</h3>
+                <ul>
+                    <li><strong>creatproc</strong> <进程名称> <运行时长> <内存需求大小> [I/O起始停止时间/-1]</li>
+                    <li><strong>killproc</strong> <进程号></li>
+                    <li><strong>psproc</strong> - 显示所有进程状态</li>
+                    <li><strong>mem</strong> - 显示内存使用情况</li>
+                    <li><strong>creatfile</strong> <文件名></li>
+                    <li><strong>deletefile</strong> <文件名></li>
+                    <li><strong>lsfile</strong> <文件名></li>
+                </ul>
+                <div class="example">
+                    <h3>命令示例</h3>
+                    <ul>
+                        <li>creatproc test1 100 64 -1</li>
+                        <li>creatfile test.txt</li>
+                        <li>psproc</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const commandInput = document.getElementById('command-input');
+        const output = document.getElementById('output');
+
+        // 添加面板折叠功能
+        document.querySelectorAll('.panel-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const section = header.parentElement;
+                section.classList.toggle('collapsed');
+            });
+        });
+
+        commandInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const command = commandInput.value.trim();
+                output.innerHTML += `<div class="command">$ ${command}</div>`;
+                
+                socket.emit('command', { command: command });
+                commandInput.value = '';
+            }
+        });
+
+        socket.on('command_result', (data) => {
+            output.innerHTML += `<div class="result">${data.result}</div>`;
+            output.scrollTop = output.scrollHeight;
+        });
+
+        socket.on('update_status', (data) => {
+            // 更新进程状态
+            const processStatus = document.getElementById('process-status');
+            processStatus.innerHTML = '';
+            data.processes.forEach(process => {
+                processStatus.innerHTML += `
+                    <div class="process-item">
+                        <p>ID: <span>${process.id}</span></p>
+                        <p>名称: <span>${process.name}</span></p>
+                        <p>状态: <span>${process.state}</span></p>
+                        <p>内存: <span>${process.memory}MB</span></p>
+                    </div>
+                `;
+            });
+
+            // 更新内存状态
+            const memoryStatus = document.getElementById('memory-status');
+            memoryStatus.innerHTML = `
+                <div class="process-item">
+                    <p>总内存: <span>${data.memory.total}MB</span></p>
+                    <p>已使用: <span>${data.memory.used}MB</span></p>
+                    <p>空闲: <span>${data.memory.free}MB</span></p>
+                </div>
+            `;
+
+            // 更新文件状态
+            const fileStatus = document.getElementById('file-status');
+            fileStatus.innerHTML = '';
+            data.files.forEach(file => {
+                fileStatus.innerHTML += `
+                    <div class="file-item">
+                        <p>ID: <span>${file.id}</span></p>
+                        <p>名称: <span>${file.name}</span></p>
+                        <p>大小: <span>${file.size}MB</span></p>
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+</html> 
